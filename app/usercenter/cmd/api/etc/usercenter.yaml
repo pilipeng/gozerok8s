@@ -1,0 +1,11 @@
+Name: usercenter-api
+Host: 0.0.0.0
+Port: 1004 #直辖
+#Port: 1002 #k8s
+Mode: dev
+
+UsercenterRpcConf:
+  Endpoints:
+    - 127.0.0.1:2004
+#  Target: k8s://gozerok8s-ns/usercenter-rpc-svc:1102 #goctl kube 默认生成的k8s yaml的serviceName: {rpc中定义的name}-svc
+  NonBlock: true

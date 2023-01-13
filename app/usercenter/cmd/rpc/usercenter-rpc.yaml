@@ -1,0 +1,105 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: usercenter-rpc
+  namespace: gozerok8s
+  labels:
+    app: usercenter-rpc
+spec:
+  replicas: 3
+  revisionHistoryLimit: 5
+  selector:
+    matchLabels:
+      app: usercenter-rpc
+  template:
+    metadata:
+      labels:
+        app: usercenter-rpc
+    spec:
+      containers:
+      - name: usercenter-rpc
+        image: usercenter-rpc:v1
+        ports:
+        - containerPort: 1102
+        readinessProbe:
+          tcpSocket:
+            port: 1102
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        livenessProbe:
+          tcpSocket:
+            port: 1102
+          initialDelaySeconds: 15
+          periodSeconds: 20
+        resources:
+          requests:
+            cpu: 500m
+            memory: 512Mi
+          limits:
+            cpu: 1000m
+            memory: 1024Mi
+        volumeMounts:
+        - name: timezone
+          mountPath: /etc/localtime
+      volumes:
+        - name: timezone
+          hostPath:
+            path: /usr/share/zoneinfo/Asia/Shanghai
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: usercenter-rpc-svc
+  namespace: gozerok8s
+spec:
+  ports:
+  - port: 1102
+    targetPort: 1102
+  selector:
+    app: usercenter-rpc
+
+---
+
+apiVersion: autoscaling/v2beta1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: usercenter-rpc-hpa-c
+  namespace: gozerok8s
+  labels:
+    app: usercenter-rpc-hpa-c
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: usercenter-rpc
+  minReplicas: 3
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      targetAverageUtilization: 80
+
+---
+
+apiVersion: autoscaling/v2beta1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: usercenter-rpc-hpa-m
+  namespace: gozerok8s
+  labels:
+    app: usercenter-rpc-hpa-m
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: usercenter-rpc
+  minReplicas: 3
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: memory
+      targetAverageUtilization: 80
